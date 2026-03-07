@@ -2,7 +2,10 @@
 Abstract base class for all data sources.
 """
 
+import re
 from abc import ABC, abstractmethod
+
+_COLOR_TAG_RE = re.compile(r"\{color:\w+\}|\{/color\}")
 
 
 class DataSource(ABC):
@@ -57,7 +60,7 @@ class DataSource(ABC):
             return self._wrap_lines("Loading...", width, height)
         try:
             lines = self.format_for_display(width, height)
-            return [line[:width].ljust(width) for line in lines[:height]]
+            return [self._truncate_preserving_tags(line, width) for line in lines[:height]]
         except Exception as e:
             return self._wrap_lines(f"[Display Error: {e}]", width, height)
 
@@ -73,8 +76,67 @@ class DataSource(ABC):
         return lines
 
     @staticmethod
+    def _truncate_preserving_tags(text: str, width: int) -> str:
+        """Truncate by visible length, keeping color tags intact."""
+        if "{color:" not in text:
+            return text[:width].ljust(width)
+
+        result = []
+        visible = 0
+        i = 0
+        in_tag = False
+        tag_buf = []
+        while i < len(text) and visible < width:
+            ch = text[i]
+            if ch == "{" and (text[i:].startswith("{color:") or text[i:].startswith("{/color}")):
+                in_tag = True
+                tag_buf = [ch]
+            elif in_tag:
+                tag_buf.append(ch)
+                if ch == "}":
+                    result.append("".join(tag_buf))
+                    in_tag = False
+                    tag_buf = []
+            else:
+                result.append(ch)
+                visible += 1
+            i += 1
+
+        # Close any unclosed color tag
+        out = "".join(result)
+        if "{color:" in out and out.count("{color:") > out.count("{/color}"):
+            out += "{/color}"
+
+        return out
+
+    @staticmethod
     def truncate(text: str, width: int) -> str:
         """Truncate text to width, adding ellipsis if needed."""
-        if len(text) <= width:
+        visible_len = len(_COLOR_TAG_RE.sub("", text))
+        if visible_len <= width:
             return text
-        return text[: width - 1] + "…"
+        # Truncate by visible chars, preserving tags
+        result = []
+        visible = 0
+        i = 0
+        in_tag = False
+        tag_buf = []
+        while i < len(text) and visible < width - 1:
+            ch = text[i]
+            if ch == "{" and (text[i:].startswith("{color:") or text[i:].startswith("{/color}")):
+                in_tag = True
+                tag_buf = [ch]
+            elif in_tag:
+                tag_buf.append(ch)
+                if ch == "}":
+                    result.append("".join(tag_buf))
+                    in_tag = False
+                    tag_buf = []
+            else:
+                result.append(ch)
+                visible += 1
+            i += 1
+        out = "".join(result)
+        if "{color:" in out and out.count("{color:") > out.count("{/color}"):
+            out += "{/color}"
+        return out + "…"

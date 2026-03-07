@@ -43,54 +43,65 @@ MTA_FEEDS = {
     "SIR": "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-si",
 }
 
-# ANSI color codes for subway line bullets
+
+# Subway line -> color name for curses rendering
 LINE_COLORS = {
-    "1": "\033[91m",
-    "2": "\033[91m",
-    "3": "\033[91m",  # Red
-    "4": "\033[92m",
-    "5": "\033[92m",
-    "6": "\033[92m",  # Green
-    "7": "\033[95m",  # Purple
-    "A": "\033[94m",
-    "C": "\033[94m",
-    "E": "\033[94m",  # Blue
-    "B": "\033[93m",
-    "D": "\033[93m",
-    "F": "\033[93m",
-    "M": "\033[93m",  # Orange/Yellow
-    "N": "\033[93m",
-    "Q": "\033[93m",
-    "R": "\033[93m",
-    "W": "\033[93m",
-    "G": "\033[32m",  # Lime green
-    "J": "\033[33m",
-    "Z": "\033[33m",  # Brown
-    "L": "\033[90m",  # Gray
-    "S": "\033[90m",  # Gray
+    "A": "blue",
+    "C": "blue",
+    "E": "blue",
+    "B": "orange",
+    "D": "orange",
+    "F": "orange",
+    "M": "orange",
+    "N": "yellow",
+    "Q": "yellow",
+    "R": "yellow",
+    "W": "yellow",
+    "1": "red",
+    "2": "red",
+    "3": "red",
+    "4": "green",
+    "5": "green",
+    "6": "green",
+    "7": "magenta",
+    "G": "green",
+    "J": "yellow",
+    "Z": "yellow",
+    "L": "gray",
+    "S": "gray",
 }
-RESET = "\033[0m"
 
 
 def _color_line(line: str) -> str:
-    """Wrap a line letter in its ANSI color."""
-    color = LINE_COLORS.get(line, "")
-    return f"{color}●{line}{RESET}" if color else f"●{line}"
+    """Format a subway line bullet with color markup for curses rendering."""
+    color = LINE_COLORS.get(line)
+    if color:
+        return f"{{color:{color}}}●{line}{{/color}}"
+    return f"●{line}"
 
 
 class SubwayDataSource(DataSource):
     name = "NYC Subway"
     refresh_interval_seconds = 60
 
-    def __init__(self, watched_stops: dict[str, str] | None = None):
+    def __init__(
+        self,
+        watched_stops: dict[str, str] | None = None,
+        stop_groups: list[list[str]] | None = None,
+    ):
         """
         Args:
-            watched_stops: Optional dict mapping stop_id -> display_name.
-                If None, shows a summary of active trains per line.
-                Example: {"120N": "96 St (1/2/3) Northbound", "A27N": "59 St-Columbus Northbound"}
+            watched_stops: Dict mapping stop_id -> display_name.
+            stop_groups: List of groups of stop_ids to cycle through.
+                Each group is shown together. If None, all stops shown at once.
+                Example: [["F18N", "F18S"], ["A40N", "A40S"], ["423N", "423S"]]
         """
         super().__init__()
         self.watched_stops = watched_stops
+        self.stop_groups = stop_groups
+        self._group_page = 0
+        self._page_interval = 10
+        self._last_page_time = 0.0
 
     def fetch_data(self) -> dict:
         if not HAS_GTFS:
@@ -147,7 +158,20 @@ class SubwayDataSource(DataSource):
 
         # If watching specific stops, show arrivals
         if self.watched_stops and "stop_arrivals" in data:
-            for sid, display_name in self.watched_stops.items():
+            # Determine which stops to show this cycle
+            if self.stop_groups:
+                now = time.monotonic()
+                if now - self._last_page_time >= self._page_interval:
+                    self._group_page += 1
+                    self._last_page_time = now
+                group = self.stop_groups[self._group_page % len(self.stop_groups)]
+                visible_stops = {
+                    sid: self.watched_stops[sid] for sid in group if sid in self.watched_stops
+                }
+            else:
+                visible_stops = self.watched_stops
+
+            for sid, display_name in visible_stops.items():
                 arrivals = data["stop_arrivals"].get(sid, [])
                 lines.append(f" {display_name}")
                 if arrivals:

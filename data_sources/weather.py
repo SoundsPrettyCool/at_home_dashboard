@@ -81,9 +81,11 @@ class WeatherDataSource(DataSource):
             "current": "temperature_2m,relative_humidity_2m,apparent_temperature,"
             "weather_code,wind_speed_10m,wind_gusts_10m",
             "hourly": "temperature_2m,weather_code,precipitation_probability",
+            "daily": "weather_code,temperature_2m_max,temperature_2m_min,"
+            "precipitation_probability_max",
             "temperature_unit": "fahrenheit",
             "wind_speed_unit": "mph",
-            "forecast_days": 1,
+            "forecast_days": 7,
             "timezone": "America/New_York",
         }
         resp = requests.get(url, params=params, timeout=10)
@@ -140,7 +142,33 @@ class WeatherDataSource(DataSource):
             line = f"  {hr_label:>5}  {tp:>3}°F  {cond:<15}{rain_str}"
             lines.append(self.truncate(line, width))
             count += 1
-            if count >= height - len(lines) + count:
+            if count >= 4:
                 break
+
+        # 7-day forecast
+        daily = data.get("daily", {})
+        days = daily.get("time", [])
+        day_codes = daily.get("weather_code", [])
+        day_highs = daily.get("temperature_2m_max", [])
+        day_lows = daily.get("temperature_2m_min", [])
+        day_precip = daily.get("precipitation_probability_max", [])
+
+        if days:
+            lines.append("")
+            lines.append(" 7-Day Forecast:")
+            for i, day in enumerate(days):
+                try:
+                    dt = datetime.strptime(day, "%Y-%m-%d")
+                    day_label = dt.strftime("%a") if i > 0 else "Today"
+                except ValueError:
+                    day_label = day
+                hi = day_highs[i] if i < len(day_highs) else "?"
+                lo = day_lows[i] if i < len(day_lows) else "?"
+                cond = WMO_CODES.get(day_codes[i] if i < len(day_codes) else 0, "?")
+                pp = day_precip[i] if i < len(day_precip) else 0
+                rain_str = f" 💧{pp}%" if pp and pp > 0 else ""
+                icon = WEATHER_ICONS.get(cond, "  ")
+                line = f"  {day_label:<5} {icon} {lo:>3}°/{hi:>3}° {cond:<13}{rain_str}"
+                lines.append(self.truncate(line, width))
 
         return lines[:height]
