@@ -5,9 +5,9 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=pi
-WorkingDirectory=/home/pi/at_home_dashboard
-ExecStart=/home/pi/at_home_dashboard/.venv/bin/python dashboard.py
+User=anonchickenlegs
+WorkingDirectory=/home/anonchickenlegs/Projects/at_home_dashboard
+ExecStart=/home/anonchickenlegs/Projects/at_home_dashboard/venv/bin/python3.12 dashboard.py
 Restart=on-failure
 RestartSec=5
 StandardInput=tty

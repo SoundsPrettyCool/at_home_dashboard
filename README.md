@@ -109,3 +109,15 @@ To watch specific stops, you'll need MTA stop IDs. Append `N` (north/uptown) or 
 | `L03N` | 14 St-Union Sq (L) Eastbound |
 
 Full stop list: [MTA GTFS Static Data](https://new.mta.info/developers)
+
+# commands to run the code
+sudo nano /etc/systemctl/system/dashboard.service (to see the configuration of the task)
+
+sudo systemctl daemon-reload (to restart the systemctl daemon)
+
+sudo systemctl restart dashboard (to restart the dashboard)
+
+sudo systemctl status dashboard (to see the status of the dashboard)
+
+CTRL + ALT + F1 ( to see the terminal the code is running on)
+CTRL + ALT + F7 ( to go back to the rasberry pi UI)
