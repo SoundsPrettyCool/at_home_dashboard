@@ -1,0 +1,21 @@
+[Unit]
+Description=NYC Terminal Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/at_home_dashboard
+ExecStart=/home/pi/at_home_dashboard/.venv/bin/python dashboard.py
+Restart=on-failure
+RestartSec=5
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+[Install]
+WantedBy=multi-user.target

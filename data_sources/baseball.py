@@ -57,7 +57,7 @@ class BaseballDataSource(DataSource):
         self._recent_page = 0
         self._recent_interval = 7
         self._recent_last_page = 0.0
-        self._left_per_page = 3
+        self._left_per_page = 2
 
     def fetch_data(self) -> dict:
         today = datetime.now().strftime("%Y-%m-%d")
@@ -196,27 +196,25 @@ class BaseballDataSource(DataSource):
 
             if live_batch:
                 left_lines.append("LIVE")
-                for game in live_batch:
-                    tag = f"[{game['source']}]"
-                    inn = f"{game['inning_state']} {game['inning']}" if game["inning"] else ""
+                for g in live_batch:
+                    tag = f"[{g['source']}]"
+                    inn = f"{g['inning_state']} {g['inning']}" if g["inning"] else ""
                     left_lines.append(f" {color_live('LIVE')} {tag} {inn}")
-                    matchup = (
-                        f"  {game['away']} {game['away_score']}"
-                        f" @ {game['home']} {game['home_score']}"
-                    )
-                    left_lines.append(self.truncate(matchup, col_width))
+                    away = f"  {g['away']}: {g['away_score']}"
+                    home = f"  {g['home']}: {g['home_score']}"
+                    left_lines.append(self.truncate(away, col_width))
+                    left_lines.append(self.truncate(home, col_width))
                     left_lines.append("")
 
             if recent_batch:
                 left_lines.append("RECENT")
-                for game in recent_batch:
-                    tag = f"[{game['source']}]"
+                for g in recent_batch:
+                    tag = f"[{g['source']}]"
                     left_lines.append(f" FINAL {tag}")
-                    matchup = (
-                        f"  {game['away']} {game['away_score']}"
-                        f" @ {game['home']} {game['home_score']}"
-                    )
-                    left_lines.append(self.truncate(matchup, col_width))
+                    away = f"  {g['away']}: {g['away_score']}"
+                    home = f"  {g['home']}: {g['home_score']}"
+                    left_lines.append(self.truncate(away, col_width))
+                    left_lines.append(self.truncate(home, col_width))
                     left_lines.append("")
         else:
             left_lines.append("NO LIVE GAMES")
@@ -237,8 +235,8 @@ class BaseballDataSource(DataSource):
             for game in batch:
                 tag = f"[{game['source']}]"
                 right_lines.append(f" {game['time']} {tag}")
-                matchup = f"  {game['away']} @ {game['home']}"
-                right_lines.append(self.truncate(matchup, col_width))
+                right_lines.append(self.truncate(f"  {game['away']}", col_width))
+                right_lines.append(self.truncate(f"  {game['home']}", col_width))
                 right_lines.append("")
         else:
             right_lines.append("NO UPCOMING GAMES")
