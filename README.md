@@ -120,4 +120,5 @@ sudo systemctl restart dashboard (to restart the dashboard)
 sudo systemctl status dashboard (to see the status of the dashboard)
 
 CTRL + ALT + F1 ( to see the terminal the code is running on)
-CTRL + ALT + F7 ( to go back to the rasberry pi UI)
+CTRL + ALT + F2 (to go to terminal to run commands)
+startx inside of terminal when you run CTRL + ALT + F2 will open on the rasberry pi UI
