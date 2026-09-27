@@ -9,21 +9,23 @@ A curses-based terminal dashboard for Raspberry Pi that displays NYC subway arri
 ## Commands
 
 ```bash
+# Install dependencies (uv; creates .venv from pyproject.toml + uv.lock)
+uv sync
+uv add <pkg>                # add a dependency (updates uv.lock)
+
 # Run the dashboard
-python dashboard.py
-python dashboard.py --stops '120N:96 St Uptown' --refresh 30 --lat 40.7128 --lon -74.0060
+uv run dashboard.py
+uv run dashboard.py --stops '120N:96 St Uptown' --refresh 30 --lat 40.7128 --lon -74.0060
 
 # Lint
-ruff check .
-ruff check --fix .
-
-# Install dependencies
-pip install -e ".[dev]"
+uv run ruff check .
+uv run ruff check --fix .
 
 # Manage on Raspberry Pi
 sudo systemctl restart dashboard
 sudo systemctl status dashboard
 sudo systemctl daemon-reload  # after editing dashboard.service
+uv sync --no-dev              # after pulling dependency changes (service runs .venv/bin/python)
 ```
 
 ## Architecture

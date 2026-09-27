@@ -16,24 +16,33 @@ A modular, auto-refreshing terminal dashboard that displays NYC subway data, wea
 
 ## Setup
 
+Dependencies are managed with [uv](https://docs.astral.sh/uv/) (`pyproject.toml` + `uv.lock`).
+
 ```bash
-pip install requests gtfs-realtime-bindings feedparser
+# Install uv once (also on the Raspberry Pi)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create .venv and install dependencies (Python 3.12, per .python-version)
+uv sync
+
+# Lint
+uv run ruff check .
 ```
 
 ## Usage
 
 ```bash
 # Basic (summary of all active subway trains)
-python dashboard.py
+uv run dashboard.py
 
 # Watch specific subway stops
-python dashboard.py --stops '120N:96 St Uptown (1/2/3)' 'A27N:59 St Columbus Circle'
+uv run dashboard.py --stops '120N:96 St Uptown (1/2/3)' 'A27N:59 St Columbus Circle'
 
 # Custom refresh interval (seconds)
-python dashboard.py --refresh 30
+uv run dashboard.py --refresh 30
 
 # Custom weather location
-python dashboard.py --lat 34.0522 --lon -118.2437
+uv run dashboard.py --lat 34.0522 --lon -118.2437
 ```
 
 ## Controls
@@ -111,6 +120,8 @@ To watch specific stops, you'll need MTA stop IDs. Append `N` (north/uptown) or 
 Full stop list: [MTA GTFS Static Data](https://new.mta.info/developers)
 
 # commands to run the code
+The systemd service runs `.venv/bin/python dashboard.py`, so run `uv sync --no-dev` on the Pi after pulling changes (and once before the first start).
+
 sudo nano /etc/systemctl/system/dashboard.service (to see the configuration of the task)
 
 sudo systemctl daemon-reload (to restart the systemctl daemon)

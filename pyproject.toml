@@ -12,14 +12,14 @@ dashboard = "dashboard:main"
 name = "at-home-dashboard"
 version = "0.1.0"
 description = "A modular, auto-refreshing terminal dashboard for NYC subway, weather, baseball, and news"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "requests",
     "gtfs-realtime-bindings",
     "feedparser",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "ruff",
 ]
